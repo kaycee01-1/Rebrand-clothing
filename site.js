@@ -26,8 +26,13 @@ function toast(t,link){const e=$("#toast");e.innerHTML=t+(link?` <a href="cart.h
 function add(p,ci,size,qty){const key=`${p.id}-${ci}-${size}`,h=cart.find(l=>l.key===key);h?h.qty=Math.min(10,h.qty+qty):cart.push({key,id:p.id,ci,size,qty});saveCart();paintCount();toast(`${p.name} added.`,1)}
 /* shared header + footer */
 (function(){const pg=document.body.dataset.page,L=[["index.html","Shop","shop"],["about.html","About","about"],["help.html","Help","help"]];
-document.body.insertAdjacentHTML("afterbegin",`<header class="nav"><div class="wrap"><a class="logo" href="index.html">${CONFIG.brand}</a><nav aria-label="Main">${L.map(l=>`<a href="${l[0]}"${pg==l[2]?' aria-current="page"':""}>${l[1]}</a>`).join("")}</nav><a class="bag" href="cart.html" aria-label="Cart">Cart <b id="count">0</b></a></div></header>`);
-document.body.insertAdjacentHTML("beforeend",`<footer><div class="wrap"><span>© ${new Date().getFullYear()} ${CONFIG.brand}</span><span>${L.map(l=>`<a href="${l[0]}">${l[1]}</a>`).join("")}<a href="cart.html">Cart</a></span></div></footer><div class="toast" id="toast" role="status"></div>`);paintCount()})();
+document.body.insertAdjacentHTML("afterbegin",`<header class="nav"><div class="wrap"><a class="logo" href="index.html">${CONFIG.brand}</a><a class="bag" href="cart.html" aria-label="Cart">Cart <b id="count">0</b></a><button class="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><span></span></button><nav id="menu" aria-label="Main">${L.map(l=>`<a href="${l[0]}"${pg==l[2]?' aria-current="page"':""}>${l[1]}</a>`).join("")}</nav></div></header>`);
+document.body.insertAdjacentHTML("beforeend",`<footer><div class="wrap"><span>© ${new Date().getFullYear()} ${CONFIG.brand}</span><span>${L.map(l=>`<a href="${l[0]}">${l[1]}</a>`).join("")}<a href="cart.html">Cart</a></span></div></footer><div class="toast" id="toast" role="status"></div>`);paintCount();
+const nav=$(".nav"),bg=$(".burger"),setMenu=o=>{nav.classList.toggle("open",o);bg.setAttribute("aria-expanded",o);bg.setAttribute("aria-label",o?"Close menu":"Open menu")};
+bg.onclick=()=>setMenu(!nav.classList.contains("open"));
+$("#menu").onclick=e=>{if(e.target.closest("a"))setMenu(false)};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&nav.classList.contains("open")){setMenu(false);bg.focus()}});
+document.addEventListener("click",e=>{if(!nav.contains(e.target))setMenu(false)})})();
 /* shop page */
 if(document.body.dataset.page==="shop"){let f=location.hash.slice(1);if(!CATS.some(c=>c[0]===f))f="all";const pick={};
 $("#cats").innerHTML=CATS.map(([k,l])=>`<button class="chip" data-k="${k}">${l}</button>`).join("");
@@ -46,7 +51,7 @@ else if(e.target.closest("[data-add]")){if(!size){err="Choose a size first."}els
 d.onclose=draw;d.showModal()}
 draw()}
 /* cart page */
-if(document.body.dataset.page==="cart"){let code="";const PROMO={STREET5:s=>Math.min(5000,s),WELCOME10:s=>Math.round(s*.1)};
+if(document.body.dataset.page==="cart"){let code="";const PROMO={STREET5:s=>Math.min(5000,s),WELCOME10:s=>Math.round(s*.1),KELZZ:s=>Math.round(s*.25)};
 function draw(){const n=count();$("#empty").hidden=n>0;$("#full").hidden=!n;if(!n)return;
 $("#lines").innerHTML=cart.map(l=>{const p=byId(l.id);return`<div class="line"><img src="${img(p,l.ci)}" alt=""><div><h3>${p.name}</h3><p class="mut">${p.colors[l.ci][0]} · ${l.size}</p><p><b>${money(p.price)}</b></p><div class="row"><div class="qty"><button data-q="${l.key}" data-d="-1" aria-label="Fewer">−</button><output>${l.qty}</output><button data-q="${l.key}" data-d="1" aria-label="More">+</button></div><button class="link" data-rm="${l.key}">Remove</button></div></div><b>${money(p.price*l.qty)}</b></div>`}).join("");
 const s=subtotal(),disc=code?PROMO[code](s):0;$("#sub").textContent=money(s);$("#disc-row").hidden=!disc;$("#disc").textContent="−"+money(disc);$("#total").textContent=money(s-disc);$("#ship").textContent=s>=100000?"Free standard delivery":"Calculated at checkout";
